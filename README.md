@@ -16,6 +16,7 @@ AppleScript tool for batch converting Visio stencils (.vss, .vssx) to OmniGraffl
 - macOS
 - OmniGraffle with iCloud Drive enabled
 - Visio stencil files (.vss or .vssx)
+- **Accessibility permissions** for your terminal application (required for GUI automation)
 
 ## Getting Started
 
@@ -126,6 +127,11 @@ The script automatically sanitizes filenames by:
 ## Troubleshooting
 
 ### Common Issues
+
+**"osascript is not allowed to send keystrokes"**
+- Grant Accessibility permissions to Terminal (or your terminal app) in System Settings > Privacy & Security > Accessibility
+- Click the '+' button and add your terminal application (Terminal.app, iTerm.app, etc.)
+- You may need to restart your terminal application after granting permissions
 
 **Script fails with "OmniGraffle iCloud stencils folder not found"**
 - Ensure OmniGraffle is installed and configured to use iCloud Drive
