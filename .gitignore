@@ -8,6 +8,9 @@
 # Log files
 *.log
 
+# Compiled AppleScript
+batch_convert_visio_to_graffle.scpt
+
 # Input/Output folders
 VisioStencils/
 OmniGraffleStencils/
