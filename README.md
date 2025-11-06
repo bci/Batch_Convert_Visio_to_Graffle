@@ -64,7 +64,7 @@ osascript batch_convert_visio_to_graffle.applescript [OPTIONS]
 - `--visio-stencil-folder DIR` - Input folder containing Visio stencils (default: ./VisioStencils)
 - `--debuglevel LEVEL` - Set logging level: debug, info, warning, error (default: info)
 - `--quit-interval NUM` - Quit OmniGraffle every NUM files to free memory (default: 50)
-- `--count NUM` - Limit number of files to convert (useful for testing)
+- `--count NUM` - Limit number of conversions (skipped files don't count toward this limit)
 - `--batch` - Suppress all dialog boxes for unattended execution
 - `--help, -h` - Display help message
 

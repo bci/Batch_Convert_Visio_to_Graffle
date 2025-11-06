@@ -22,7 +22,7 @@ on run argv
 	-- Check for help flag first
 	repeat with arg in argv
 		if (arg as text) is "--help" or (arg as text) is "-h" then
-			set helpLines to {"Usage: osascript batch_convert_visio_to_graffle.applescript [OPTIONS]", "", "Recursively converts Visio stencils (.vss, .vssx) to OmniGraffle stencils.", "", "Required options:", "  --overwrite                Overwrite existing stencils", "  --skip                     Skip files that already exist", "", "Optional options:", "  --visio-stencil-folder DIR Input folder containing Visio stencils (default: ./VisioStencils)", "  --debuglevel LEVEL         Set logging level: debug, info, warning, error (default: info)", "  --quit-interval NUM        Quit OmniGraffle every NUM files to free memory (default: 50)", "  --count NUM                Limit number of files to convert (useful for testing)", "  --batch                    Suppress all dialog boxes for unattended execution", "  --help, -h                 Display this help message", "", "Examples:", "  osascript batch_convert_visio_to_graffle.applescript --skip", "  osascript batch_convert_visio_to_graffle.applescript --overwrite --debuglevel debug", "  osascript batch_convert_visio_to_graffle.applescript --skip --count 5", "  osascript batch_convert_visio_to_graffle.applescript --skip --visio-stencil-folder ~/MyStencils", "  osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25", "  osascript batch_convert_visio_to_graffle.applescript --skip --batch"}
+			set helpLines to {"Usage: osascript batch_convert_visio_to_graffle.applescript [OPTIONS]", "", "Recursively converts Visio stencils (.vss, .vssx) to OmniGraffle stencils.", "", "Required options:", "  --overwrite                Overwrite existing stencils", "  --skip                     Skip files that already exist", "", "Optional options:", "  --visio-stencil-folder DIR Input folder containing Visio stencils (default: ./VisioStencils)", "  --debuglevel LEVEL         Set logging level: debug, info, warning, error (default: info)", "  --quit-interval NUM        Quit OmniGraffle every NUM files to free memory (default: 50)", "  --count NUM                Limit number of conversions (not including skipped files)", "  --batch                    Suppress all dialog boxes for unattended execution", "  --help, -h                 Display this help message", "", "Examples:", "  osascript batch_convert_visio_to_graffle.applescript --skip", "  osascript batch_convert_visio_to_graffle.applescript --overwrite --debuglevel debug", "  osascript batch_convert_visio_to_graffle.applescript --skip --count 5", "  osascript batch_convert_visio_to_graffle.applescript --skip --visio-stencil-folder ~/MyStencils", "  osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25", "  osascript batch_convert_visio_to_graffle.applescript --skip --batch"}
 			repeat with helpLine in helpLines
 				log helpLine
 			end repeat
@@ -196,12 +196,6 @@ on run argv
 		if visioFile is not "" then
 			set processedCount to processedCount + 1
 			
-			-- Stop if we've reached maxCount
-			if maxCount is not missing value and processedCount > maxCount then
-				my logMessage("INFO", "Reached maximum count of " & maxCount & " files", 1, debugPriority)
-				exit repeat
-			end if
-			
 			try
 				my logMessage("DEBUG", "Processing file: " & visioFile, 0, debugPriority)
 				
@@ -285,6 +279,12 @@ on run argv
 					
 					-- Increment converted count for quit interval tracking
 					set convertedCount to convertedCount + 1
+					
+					-- Stop if we've reached maxCount (only count actual conversions)
+					if maxCount is not missing value and convertedCount >= maxCount then
+						my logMessage("INFO", "Reached maximum count of " & maxCount & " conversions", 1, debugPriority)
+						exit repeat
+					end if
 					
 					-- Periodically quit OmniGraffle to free memory (based on actual conversions, not skipped files)
 					if convertedCount mod quitInterval is 0 then
