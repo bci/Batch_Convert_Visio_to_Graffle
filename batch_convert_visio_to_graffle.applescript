@@ -5,7 +5,7 @@
 
 -- Logging handler
 on logMessage(level, msg, priority, debugPriority)
-	if priority ≥ debugPriority then
+	if priority >= debugPriority then
 		log "[" & level & "] " & msg
 	end if
 end logMessage
@@ -96,7 +96,8 @@ on run argv
 	else if debugLevel is "error" then
 		set debugPriority to 3
 	end if
-	set scriptDir to do shell script "cd \"$(dirname " & quoted form of POSIX path of (path to me) & "\"); pwd"
+	set scriptDir to do shell script "dirname " & quoted form of POSIX path of (path to me)
+	set scriptDir to do shell script "cd " & quoted form of scriptDir & " && pwd"
 	
 	-- Set default visioStencilsDir if not provided
 	if visioStencilsDir is missing value then
@@ -248,7 +249,7 @@ on run argv
 						error "Output file was not created: " & savedStencilPath
 					end if
 					
-					my logMessage("INFO", "[" & processedCount & "/" & totalFiles & "] OK: " & visioFile & " → " & savedStencilPath, 1, debugPriority)
+					my logMessage("INFO", "[" & processedCount & "/" & totalFiles & "] OK: " & visioFile & " -> " & savedStencilPath, 1, debugPriority)
 				end if
 				
 				-- Periodically quit OmniGraffle to free memory
@@ -261,8 +262,8 @@ on run argv
 				end if
 				
 			on error errMsg
-				set end of errorList to "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " — " & errMsg
-				my logMessage("ERROR", "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " — " & errMsg, 3, debugPriority)
+				set end of errorList to "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " - " & errMsg
+				my logMessage("ERROR", "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " - " & errMsg, 3, debugPriority)
 			end try
 		end if
 	end repeat
