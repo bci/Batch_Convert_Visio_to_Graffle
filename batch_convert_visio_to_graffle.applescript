@@ -172,6 +172,7 @@ on run argv
 	set totalFiles to count of fileList
 	set processedCount to 0
 	set skippedCount to 0
+	set convertedCount to 0
 	set errorList to {}
 	
 	-- OmniGraffle's iCloud stencils directory
@@ -281,16 +282,20 @@ on run argv
 					end if
 					
 					my logMessage("INFO", "[" & processedCount & "/" & totalFiles & "] OK: " & visioFile & " -> " & savedStencilPath, 1, debugPriority)
+					
+					-- Increment converted count for quit interval tracking
+					set convertedCount to convertedCount + 1
+					
+					-- Periodically quit OmniGraffle to free memory (based on actual conversions, not skipped files)
+					if convertedCount mod quitInterval is 0 then
+						my logMessage("INFO", "Quitting OmniGraffle to free memory (after " & convertedCount & " conversions)", 1, debugPriority)
+						tell application "OmniGraffle"
+							quit
+						end tell
+						delay 2.0
+					end if
 				end if
 				
-				-- Periodically quit OmniGraffle to free memory
-				if processedCount mod quitInterval is 0 then
-					my logMessage("INFO", "Quitting OmniGraffle to free memory (after " & processedCount & " files)", 1, debugPriority)
-					tell application "OmniGraffle"
-						quit
-					end tell
-					delay 2.0
-				end if
 				
 			on error errMsg
 				set end of errorList to "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " - " & errMsg
