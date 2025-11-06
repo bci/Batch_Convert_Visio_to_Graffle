@@ -64,6 +64,7 @@ osascript batch_convert_visio_to_graffle.applescript [OPTIONS]
 - `--debuglevel LEVEL` - Set logging level: debug, info, warning, error (default: info)
 - `--quit-interval NUM` - Quit OmniGraffle every NUM files to free memory (default: 50)
 - `--count NUM` - Limit number of files to convert (useful for testing)
+- `--batch` - Suppress all dialog boxes for unattended execution
 - `--help, -h` - Display help message
 
 ### Examples
@@ -83,6 +84,9 @@ osascript batch_convert_visio_to_graffle.applescript --skip --visio-stencil-fold
 
 # Adjust memory management interval
 osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25
+
+# Unattended batch mode (no dialogs)
+osascript batch_convert_visio_to_graffle.applescript --skip --batch
 ```
 
 ## How It Works

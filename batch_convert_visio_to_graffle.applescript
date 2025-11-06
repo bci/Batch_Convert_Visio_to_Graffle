@@ -17,11 +17,12 @@ on run argv
 	set quitInterval to 50 -- default
 	set visioStencilsDir to missing value -- will default to ./VisioStencils
 	set maxCount to missing value -- no limit by default
+	set batchMode to false -- default
 	
 	-- Check for help flag first
 	repeat with arg in argv
 		if (arg as text) is "--help" or (arg as text) is "-h" then
-			set helpLines to {"Usage: osascript batch_convert_visio_to_graffle.applescript [OPTIONS]", "", "Recursively converts Visio stencils (.vss, .vssx) to OmniGraffle stencils.", "", "Required options:", "  --overwrite                Overwrite existing stencils", "  --skip                     Skip files that already exist", "", "Optional options:", "  --visio-stencil-folder DIR Input folder containing Visio stencils (default: ./VisioStencils)", "  --debuglevel LEVEL         Set logging level: debug, info, warning, error (default: info)", "  --quit-interval NUM        Quit OmniGraffle every NUM files to free memory (default: 50)", "  --count NUM                Limit number of files to convert (useful for testing)", "  --help, -h                 Display this help message", "", "Examples:", "  osascript batch_convert_visio_to_graffle.applescript --skip", "  osascript batch_convert_visio_to_graffle.applescript --overwrite --debuglevel debug", "  osascript batch_convert_visio_to_graffle.applescript --skip --count 5", "  osascript batch_convert_visio_to_graffle.applescript --skip --visio-stencil-folder ~/MyStencils", "  osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25"}
+			set helpLines to {"Usage: osascript batch_convert_visio_to_graffle.applescript [OPTIONS]", "", "Recursively converts Visio stencils (.vss, .vssx) to OmniGraffle stencils.", "", "Required options:", "  --overwrite                Overwrite existing stencils", "  --skip                     Skip files that already exist", "", "Optional options:", "  --visio-stencil-folder DIR Input folder containing Visio stencils (default: ./VisioStencils)", "  --debuglevel LEVEL         Set logging level: debug, info, warning, error (default: info)", "  --quit-interval NUM        Quit OmniGraffle every NUM files to free memory (default: 50)", "  --count NUM                Limit number of files to convert (useful for testing)", "  --batch                    Suppress all dialog boxes for unattended execution", "  --help, -h                 Display this help message", "", "Examples:", "  osascript batch_convert_visio_to_graffle.applescript --skip", "  osascript batch_convert_visio_to_graffle.applescript --overwrite --debuglevel debug", "  osascript batch_convert_visio_to_graffle.applescript --skip --count 5", "  osascript batch_convert_visio_to_graffle.applescript --skip --visio-stencil-folder ~/MyStencils", "  osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25", "  osascript batch_convert_visio_to_graffle.applescript --skip --batch"}
 			repeat with helpLine in helpLines
 				log helpLine
 			end repeat
@@ -40,13 +41,19 @@ on run argv
 				set overwriteMode to true
 			else if arg is "--skip" then
 				set overwriteMode to false
+			else if arg is "--batch" then
+				set batchMode to true
 			else if arg is "--debuglevel" then
 				-- Next argument should be the level
 				if i < (count of argv) then
 					set debugLevel to item (i + 1) of argv
 					if debugLevel is not in {"info", "warning", "error", "debug"} then
-						display dialog "Invalid debug level. Use info, warning, error, or debug" buttons {"OK"} default button "OK"
-						return "ERROR: Invalid debug level"
+						set errorMsg to "ERROR: Invalid debug level. Use info, warning, error, or debug"
+						if not batchMode then
+							display dialog errorMsg buttons {"OK"} default button "OK"
+						end if
+						log errorMsg
+						return errorMsg
 					end if
 					set skipNext to true
 				end if
@@ -55,8 +62,12 @@ on run argv
 				if i < (count of argv) then
 					set quitInterval to (item (i + 1) of argv) as integer
 					if quitInterval < 1 then
-						display dialog "Quit interval must be at least 1" buttons {"OK"} default button "OK"
-						return "ERROR: Invalid quit interval"
+						set errorMsg to "ERROR: Quit interval must be at least 1"
+						if not batchMode then
+							display dialog errorMsg buttons {"OK"} default button "OK"
+						end if
+						log errorMsg
+						return errorMsg
 					end if
 					set skipNext to true
 				end if
@@ -71,8 +82,12 @@ on run argv
 				if i < (count of argv) then
 					set maxCount to (item (i + 1) of argv) as integer
 					if maxCount < 1 then
-						display dialog "Count must be at least 1" buttons {"OK"} default button "OK"
-						return "ERROR: Invalid count"
+						set errorMsg to "ERROR: Count must be at least 1"
+						if not batchMode then
+							display dialog errorMsg buttons {"OK"} default button "OK"
+						end if
+						log errorMsg
+						return errorMsg
 					end if
 					set skipNext to true
 				end if
@@ -82,8 +97,12 @@ on run argv
 	
 	-- Validate required arguments
 	if overwriteMode is missing value then
-		display dialog "Missing argument. Use --overwrite to replace existing files or --skip to skip them." buttons {"OK"} default button "OK"
-		return "ERROR: Missing argument. Use --overwrite or --skip"
+		set errorMsg to "ERROR: Missing argument. Use --overwrite to replace existing files or --skip to skip them."
+		if not batchMode then
+			display dialog errorMsg buttons {"OK"} default button "OK"
+		end if
+		log errorMsg
+		return errorMsg
 	end if
 	
 	-- Map debug levels to numeric priority (lower = more verbose)
@@ -107,7 +126,10 @@ on run argv
 		set visioDir to do shell script "cd " & quoted form of visioStencilsDir & " 2>/dev/null && pwd || echo ''"
 		if visioDir is "" then
 			set errorMsg to "ERROR: Visio stencil folder not found: " & visioStencilsDir
-			display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+			if not batchMode then
+				display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+			end if
+			log errorMsg
 			error errorMsg
 		end if
 	end if
@@ -116,7 +138,10 @@ on run argv
 	set folderExists to do shell script "test -d " & quoted form of visioDir & " && echo 'YES' || echo 'NO'"
 	if folderExists is "NO" then
 		set errorMsg to "ERROR: Visio stencil folder not found: " & visioDir
-		display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		if not batchMode then
+			display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		end if
+		log errorMsg
 		error errorMsg
 	end if
 	
@@ -124,7 +149,10 @@ on run argv
 	set fileCount to do shell script "find " & quoted form of visioDir & " -type f \\( -iname '*.vss' -o -iname '*.vssx' \\) | wc -l | tr -d ' '"
 	if fileCount is "0" then
 		set errorMsg to "ERROR: No .vss or .vssx files found in: " & visioDir
-		display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		if not batchMode then
+			display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		end if
+		log errorMsg
 		error errorMsg
 	end if
 	
@@ -153,7 +181,10 @@ on run argv
 	set folderExists to do shell script "test -d " & quoted form of omniStencilsDir & " && echo 'YES' || echo 'NO'"
 	if folderExists is "NO" then
 		set errorMsg to "ERROR: OmniGraffle iCloud stencils folder not found at: " & omniStencilsDir & return & return & "Expected location: iCloud Drive/OmniGraffle/Stencils" & return & return & "Please ensure OmniGraffle is configured to use iCloud Drive for stencils."
-		display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		if not batchMode then
+			display dialog errorMsg buttons {"OK"} default button "OK" with icon stop
+		end if
+		log errorMsg
 		error errorMsg
 	end if
 	
