@@ -275,10 +275,11 @@ on run argv
 	my logMessage("INFO", summary, 1, debugPriority)
 	
 	if (count of errorList) > 0 then
-		set summary to summary & return & return & "Errors:" & return & (errorList as string)
+		my logMessage("ERROR", "Errors encountered:", 3, debugPriority)
+		repeat with errItem in errorList
+			my logMessage("ERROR", errItem as string, 3, debugPriority)
+		end repeat
 	end if
-	
-	display dialog summary buttons {"OK"} default button "OK"
 	
 	return summary
 end run
