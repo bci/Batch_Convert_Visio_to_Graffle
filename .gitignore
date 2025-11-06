@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Backup files
+*.bak
+*~
+
+# Log files
+*.log
+
+# Input/Output folders
+VisioStencils/
+OmniGraffleStencils/
