@@ -234,46 +234,125 @@ on run argv
 					my logMessage("DEBUG", "Opening file in OmniGraffle", 0, debugPriority)
 					-- Use 'open' command to open in OmniGraffle (like double-clicking)
 					do shell script "open -a OmniGraffle " & quoted form of visioFile
-					delay 3.0
+					delay 4.0
+					
+					-- Check if OmniGraffle is responding
+					set omniResponding to true
+					try
+						tell application "System Events"
+							tell process "OmniGraffle"
+								set omniResponding to (frontmost as boolean) or true
+							end tell
+						end tell
+					on error
+						set omniResponding to false
+					end try
+					
+					if not omniResponding then
+						error "OmniGraffle appears to be unresponsive"
+					end if
 					
 					my logMessage("DEBUG", "Setting stencil name via GUI", 0, debugPriority)
 					-- Save stencil dialog opens automatically - just set the name
 					tell application "System Events"
 						tell process "OmniGraffle"
-							delay 1.0
+							-- Ensure OmniGraffle is frontmost
+							set frontmost to true
+							delay 1.5
 							
-							-- Set stencil name - select all and replace
-							keystroke "a" using {command down}
-							delay 0.2
-							do shell script "echo " & quoted form of stencilName & " | tr -d '\\n' | pbcopy"
-							keystroke "v" using {command down}
-							delay 0.5
+							-- Debug: log what we see
+							try
+								set sheetCount to count of sheets of window 1
+								my logMessage("DEBUG", "Found " & sheetCount & " sheets", 0, debugPriority)
+								if sheetCount > 0 then
+									set elemCount to count of UI elements of sheet 1 of window 1
+									my logMessage("DEBUG", "Sheet has " & elemCount & " UI elements", 0, debugPriority)
+								end if
+							end try
+							
+							-- Set the text field value directly (more reliable than keystrokes)
+							try
+								set value of text field 1 of sheet 1 of window 1 to stencilName
+								my logMessage("DEBUG", "Set text field value to: " & stencilName, 0, debugPriority)
+								delay 0.8
+							on error errMsg
+								my logMessage("DEBUG", "Failed to set value directly: " & errMsg, 0, debugPriority)
+								-- Fallback: click and type
+								try
+									click text field 1 of sheet 1 of window 1
+									delay 0.5
+									keystroke "a" using {command down}
+									delay 0.3
+									keystroke stencilName
+									delay 0.8
+									my logMessage("DEBUG", "Used keystroke fallback", 0, debugPriority)
+								on error errMsg2
+									my logMessage("ERROR", "Keystroke fallback failed: " & errMsg2, 3, debugPriority)
+								end try
+							end try
 							
 							-- Save (press Return)
+							my logMessage("DEBUG", "Pressing Return to save", 0, debugPriority)
 							keystroke return
-							delay 1.5
+							delay 2.5
 							
 						-- If overwrite mode and dialog appears, handle Replace
 						if overwriteMode is true then
 							try
 								my logMessage("DEBUG", "Clicking Replace button if present", 0, debugPriority)
 									click button "Replace" of sheet 1 of window 1
-									delay 0.5
+									delay 0.8
 								end try
 							end if
-							
-							-- Close the document (Cmd+W)
-							keystroke "w" using {command down}
-							delay 0.5
 						end tell
 					end tell
 					
-					-- Verify the file was created in OmniGraffle's iCloud stencils folder
-					delay 1.0
-					set fileExists to do shell script "test -e " & quoted form of savedStencilPath & " && echo 'YES' || echo 'NO'"
+					-- Wait for save to complete and verify file exists
+					my logMessage("DEBUG", "Waiting for file to be created", 0, debugPriority)
+					delay 2.0
+					
+					-- Check with timeout if file was created
+					set maxWaitAttempts to 6
+					set waitAttempt to 0
+					set fileExists to "NO"
+					
+					repeat while waitAttempt < maxWaitAttempts
+						set fileExists to do shell script "test -e " & quoted form of savedStencilPath & " && echo 'YES' || echo 'NO'"
+						if fileExists is "YES" then
+							exit repeat
+						end if
+						
+						-- Check if OmniGraffle is still responding
+						try
+							tell application "System Events"
+								tell process "OmniGraffle"
+									-- Try to get a property to test responsiveness
+									set testFrontmost to frontmost
+								end tell
+							end tell
+							my logMessage("DEBUG", "Waiting for file creation, attempt " & (waitAttempt + 1) & "/" & maxWaitAttempts, 0, debugPriority)
+							delay 2.0
+						on error
+							-- OmniGraffle hung
+							error "OmniGraffle became unresponsive during save"
+						end try
+						
+						set waitAttempt to waitAttempt + 1
+					end repeat
+					
 					if fileExists is not "YES" then
-						error "Output file was not created: " & savedStencilPath
+						error "Output file was not created after " & (maxWaitAttempts * 2) & " seconds: " & savedStencilPath
 					end if
+					
+					my logMessage("DEBUG", "File created successfully, closing window", 0, debugPriority)
+					
+					-- Close the document window (Cmd+W)
+					tell application "System Events"
+						tell process "OmniGraffle"
+							keystroke "w" using {command down}
+							delay 1.0
+						end tell
+					end tell
 					
 					my logMessage("INFO", "[" & processedCount & "/" & totalFiles & "] OK: " & visioFile & " -> " & savedStencilPath, 1, debugPriority)
 					
@@ -300,6 +379,25 @@ on run argv
 			on error errMsg
 				set end of errorList to "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " - " & errMsg
 				my logMessage("ERROR", "[" & processedCount & "/" & totalFiles & "] ERR: " & visioFile & " - " & errMsg, 3, debugPriority)
+				
+				-- If OmniGraffle hung or file not created (timeout), force quit and restart it
+				if errMsg contains "unresponsive" or errMsg contains "not responding" or errMsg contains "Output file was not created after" or errMsg contains "Invalid index" then
+					my logMessage("WARNING", "Attempting to force quit OmniGraffle due to hang/timeout", 2, debugPriority)
+					try
+						do shell script "killall -9 OmniGraffle"
+						delay 2.0
+					end try
+				else
+					-- Try to close any open dialogs/windows
+					try
+						tell application "System Events"
+							tell process "OmniGraffle"
+								keystroke "w" using {command down}
+								delay 0.5
+							end tell
+						end tell
+					end try
+				end if
 			end try
 		end if
 	end repeat
