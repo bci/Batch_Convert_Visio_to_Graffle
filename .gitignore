@@ -14,3 +14,5 @@ batch_convert_visio_to_graffle.scpt
 # Input/Output folders
 VisioStencils/
 OmniGraffleStencils/
+Sample-VisioStencils/
+temp_visio_repo/

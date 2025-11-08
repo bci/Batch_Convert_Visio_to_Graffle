@@ -1,11 +1,17 @@
 # Visio to OmniGraffle Batch Converter
 
-AppleScript tool for batch converting Visio stencils (.vss, .vssx) to OmniGraffle stencils (.gstencil).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![AppleScript](https://img.shields.io/badge/AppleScript-macOS-blue.svg)](https://developer.apple.com/library/archive/documentation/AppleScript/Conceptual/AppleScriptLangGuide/introduction/ASLR_intro.html)
+
+An AppleScript automation tool for batch converting Microsoft Visio stencils (.vss, .vssx) to OmniGraffle stencils (.gstencil). Built using vibe programming techniques for rapid development of automated workflows via command-line interface.
+
+> **Keywords:** omnigraffle, visio, stencil, vibe programming, applescript, batch conversion, automation, macos
 
 ## Features
 
+- Command-line interface for batch operations
 - Recursively processes Visio stencil files
-- Automated GUI interaction with OmniGraffle
+- Automated GUI interaction with OmniGraffle (via AppleScript)
 - Customizable stencil naming: `<folder-name>-<filename>`
 - Memory management with periodic app quit
 - Configurable logging levels
@@ -90,6 +96,27 @@ osascript batch_convert_visio_to_graffle.applescript --skip --quit-interval 25
 osascript batch_convert_visio_to_graffle.applescript --skip --batch
 ```
 
+## Including bhdicaire's visioStencils Library
+
+A utility script is provided to automatically convert stencils from [Bernard H. Dicaire's comprehensive visioStencils collection](https://github.com/bhdicaire/visioStencils):
+
+```bash
+# Clone, convert, and cleanup in one command
+./convert_visioStencils_from_github.sh
+```
+
+This script will:
+1. Clone the latest visioStencils repository from [@bhdicaire](https://github.com/bhdicaire)
+2. Convert all stencils to OmniGraffle format
+3. Update your OmniGraffle stencils folder
+4. Remove the temporary cloned repository
+
+**Performance Note:** Converting the full bhdicaire/visioStencils repository on a MacBook Pro took approximately 12 hours 11 minutes, with results of 3326 succeeded, 9 skipped, 125 failed out of 3460 total files. The script automatically recovered from approximately 20 OmniGraffle crashes during the process.
+
+## Acknowledgments
+
+Special thanks to [@bhdicaire](https://github.com/bhdicaire) for maintaining the comprehensive [visioStencils collection](https://github.com/bhdicaire/visioStencils) - an extensive library of 3460+ professional Visio stencils covering arcade games, computer racks, electronics, IT infrastructure, and more. This collection was instrumental in testing and validating the batch conversion capabilities of this tool.
+
 ## How It Works
 
 1. Recursively finds all .vss and .vssx files in the input folder
@@ -158,6 +185,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - **Kent** - *Initial work and primary development*
 - **GitHub Copilot (Claude Sonnet 4.5)** - *Co-author and development assistance*
+
+## Related Projects
+
+- [@bhdicaire/visioStencils](https://github.com/bhdicaire/visioStencils) - Comprehensive collection of professional Visio stencils
 
 ## License
 
